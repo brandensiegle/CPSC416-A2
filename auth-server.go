@@ -133,7 +133,6 @@ func getFortuneNonce(clientAddr string) FortuneInfoMessage {
 		checkError(err)
 	fserverConn.Call("FortuneServerRPC.GetFortuneInfo", clientAddr, &replyMessage)
 	fserverConn.Close()
-	println("HERE")
 	return replyMessage
 }
 
@@ -177,7 +176,6 @@ func checkHandledClient(clientAddr string, clientList **Client) *Client {
 	clientToHandle := *clientList	
 	
 	if (*clientList == nil){
-		println("new client: ", clientAddr)
 		
 		*clientList = &Client{clientAddr,-1,"",-1,nil}
 		
@@ -192,7 +190,7 @@ func checkHandledClient(clientAddr string, clientList **Client) *Client {
 			}
 			clientToHandle = clientToHandle.nextClient
 		}
-		println("new client: ", clientAddr)
+		
 		clientToHandle.nextClient = &Client{clientAddr,-1,"",-1,nil}
 		clientToHandle = clientToHandle.nextClient
 	}

@@ -92,22 +92,24 @@ func main() {
         		os.Exit(1)
     		}
 		
-		status := verifyClient(remoteAddr.String(), buf[:n], conn)
-		if (status == "good"){
-			
-		} else if (status == "unableToMarshal") {
-		} else if (status == "wrongNonce"){
-		}
+		verifyClient(remoteAddr.String(), buf[:n], conn)
+		
+		
 		
 	}
-	
-	
-	println("end")
 }
 
 //
-func sendMessageBack(status string, conn *net.UDPConn) {
-
+func sendErrorBack(status string, conn *net.UDPConn, clientToHandle *Client) {
+	errMsg := ErrMessage{status}
+	outBuffer, err := json.Marshal(errMsg)
+	checkError(err)
+	
+	toClient, err := net.ResolveUDPAddr("udp", clientToHandle.clientAddr)
+	checkError(err)
+	
+	_, err = conn.WriteTo(outBuffer, toClient)
+	checkError(err)
 }
 
 //
@@ -128,11 +130,8 @@ func verifyClient(clientAddr string, msg []byte, conn *net.UDPConn) string {
 	var msgFromClient FortuneReqMessage
 	err := json.Unmarshal(msg, &msgFromClient)
 	if (err != nil){
-		return "unableToMarshal"
+		return "could not interpret message"
 	} else if (msgFromClient.FortuneNonce == clientToHandle.FortuneNonce) {
-		
-
-
 		fortMsg := FortuneMessage{fortuneString}
 		outBuffer, err := json.Marshal(fortMsg)
 		checkError(err)
@@ -142,12 +141,35 @@ func verifyClient(clientAddr string, msg []byte, conn *net.UDPConn) string {
 	
 		_, err = conn.WriteTo(outBuffer, toClient)
 		checkError(err)
-
-
 		return "good"
-	} else{
-		return "wrongNonce"
+	} else {
+		
+		if (checkForWrongAddress(msgFromClient.FortuneNonce, clientAddr)){
+			sendErrorBack("unknown remote client address", conn, clientToHandle)
+		} else {
+			sendErrorBack("incorrect fortune nonce", conn, clientToHandle)
+		}
 	}
+	return "error"
+}
+
+//
+func checkForWrongAddress(recNonce int64, address string) bool{
+	clientToHandle := clientList
+	if (clientToHandle.clientAddr != address){
+		if (clientToHandle.FortuneNonce == recNonce){
+			return true
+		}
+		
+	} else {
+		for clientToHandle.nextClient != nil {
+			if (clientToHandle.nextClient.clientAddr == address){
+
+			}
+			clientToHandle = clientToHandle.nextClient
+		}
+	}
+	return false
 }
 
 //go function to handle rpc
@@ -173,7 +195,7 @@ func checkHandledClient(clientAddr string) *Client {
 	clientToHandle := clientList	
 	
 	if (clientList == nil){
-		println("new client: ", clientAddr)
+		
 		
 		clientList = &Client{clientAddr,-1,nil}
 		
@@ -188,7 +210,7 @@ func checkHandledClient(clientAddr string) *Client {
 			}
 			clientToHandle = clientToHandle.nextClient
 		}
-		println("new client: ", clientAddr)
+		
 		clientToHandle.nextClient = &Client{clientAddr,-1,nil}
 		clientToHandle = clientToHandle.nextClient
 	}
@@ -205,7 +227,7 @@ func generateNonce(client **Client){
 
 //RPC
 func (this *FortuneServerRPC) GetFortuneInfo(clientAddr string, fInfoMsg *FortuneInfoMessage) error{
-	println("Enter RPC")
+	
 	client := checkHandledClient(clientAddr)
 	generateNonce(&client)
 
