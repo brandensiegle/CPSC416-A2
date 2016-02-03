@@ -1,16 +1,30 @@
-Total before late penalty: [ 100/100]
+Total before late penalty: [50/100]
 ---------------------------------------------------
 
 The aserver and fserver properly follow the protocol to allow a
 single, correct, client to retrieve the fortune. [50/50]
 
 The aserver and fserver support multiple concurrent, correct,
-clients. [25/25]
+clients. [5/25]
+  - Supports 1000 concurrent clients [0/10]
+	-program hangs
+  - Supports 10 concurrent clients [0/10]
+	-program hangs
+  - Supports 2 concurrent clients [5/5]
 
-The servers properly handle misbehaving clients. [25/25]
-
-
-Points lost because you did not run gofmt  [ 0/20]
+The servers properly handle misbehaving clients. [15/25]
+  - Correct hash, wrong address [0/4]
+	- should be "unknown remote client address" error
+  - Wrong hash [3/3]
+  - Hash from old nonce [3/3]
+  - Replay hash [3/3]
+  - Old fnonce [3/3]
+  - Malformed message to fortune-server [0/3]
+	- program hangs
+  - Replay fnonce [3/3]
+  - Correct fnonce, wrong address [0/3]
+	- program hangs
+Points lost because you did not run gofmt  [20/20]
 ---------------------------------------------------
 
 All solutions must be formatted using gofmt; 20 point penalty for
